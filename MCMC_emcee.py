@@ -1,3 +1,6 @@
+import random
+import numpy as np
+
 # The emcee algorithm is an "Afine invariant ensemble sampler". The major
 # difference to Metropolis-Hastings is that you use a suite of samplers of
 # the parameter space you're using and evolve each sampler based on the
@@ -24,3 +27,22 @@
 #       get walker X_k
 #       randomly get walker X_j (j in [K/2, K] )
 #       do the same as the non-parallel algorithm
+
+# Simple walker class to store where we are in parameter space
+class Walker:
+    h = 0.
+    Omega_k = 0.
+    Omega_m = 0.
+    
+    def __init__(self, h, Omega_m, Omega_k):
+        self.h = h
+        self.Omega_m = Omega_m
+        self.Omega_k = Omega_k
+
+# This method is probably going to be super slow so maybe it's not worth writing
+def SerialStretchMove():
+    return 0
+
+def ParallelStretchMove():
+    # NOTE: Since parallelizing python is stupid, I'm going to try implimenting this in c++
+    return 0
