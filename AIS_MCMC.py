@@ -131,7 +131,7 @@ class MCMC:
 
 
 
-    def sampler(self, w0, wrange, iterations, save_chain = False, sampleCov=100, startCov=100):
+    def sampler(self, w0, wrange, iterations):
         """
         w0        : 2d array with the initial values; (nParams, nwalker)
         wrange    : ranges in parameter values
@@ -204,9 +204,5 @@ class MCMC:
                 self.acceptRatio[k, i] = acceptSum/(i+1)
         
         self.acceptRatio = self.acceptRatio/self.nW
-
-        if save_chain == True:
-            np.savetxt("AISChain_{}.txt".format(self.nW), self.chain, delimiter=',')
-
             
 
