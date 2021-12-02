@@ -10,29 +10,43 @@ import tqdm
 
 class MCMC:
     """
-    Simple adaptive MCMC sampler:
+    Implementation of an affine invariant Markov Chain Monte Carlo (MCMC)
+    
+    Goodman, J., & Weare, J. 2010, Commun. Appl. Math. Comput. Sci., 5, 65
+    -----------------------------------------------------------------------
 
-    Constructor:
-    MCMC(nwalker, nParams, labels, model, prior, solveSigma, data, a=2, seed=12345678)
+    :Constructor:
+    MCMC(nwalker, nParams, labels, model, prior, data, a=2, seed=12345678)
 
-          data[N, ncol]: N data points consisting of:
-              data[:,0]: independent variable to modelFunction
-              data[:,1]: dependent variable to be modeled by modelFunction
-              data[:,2]: individual measurement sigma's for each data point
-                         (used only if solveSigma=False)
 
-                 nParam:   number of parameters to be sampled (other than sigma if solveSigma=True)
+                nwalker:   numeber of walkers used to sample the distribution
+
+                 nParam:   number of parameters to be sampled 
 
                  labels:   a numba.typed.List of strings for plot labels
 
-    modelFunction(t, w):   where t is the independent variable and w a vector of nParam
-                           parameters. Returns a vector of N dependent variables.
+    modelFunction(t, w):   where t is the independent variable and w a vector of 
+                           n parameters (representing the position of one walker in 
+                           parameter space). Returns a vector of N dependent  
+                           variables.
                            Must be complied with @njit.
 
-       priorFunction(w):   prior pdf on parameters w; returns a probability (on [0,1]).
-                           Must be complied with @njit.
 
-                      a:   adjustable scale parameter of the Stretch Move. Default value is provided                                according to Goodman, J., & Weare, J. 2010, Commun. Appl. Math. Comput.                                  Sci., 5, 65
+       priorFunction(w):   prior pdf on parameters w; returns a probability (on [
+                           0,1]).
+                           Must be complied with @njit.
+                           
+                           
+        data[N, ncol]: N data points consisting of:
+              data[:,0]: independent variable to modelFunction
+              data[:,1]: dependent variable to be modeled by modelFunction
+              data[:,2]: individual measurement sigma's for each data point
+                         (used only if solveSigma=False)  
+                         
+
+                      a:   adjustable scale parameter of the Stretch Move (determines 
+                           the step size). Default value is provided        
+                      
 
                    seed: the random number seed to start the rng. A default seed is provided.
     """
@@ -92,17 +106,17 @@ class MCMC:
     def propose(self, w, k):
 
         """
-        Uses an affine invariant transforation to propose a new position
-        for one walker given the position of another.
+        Proposes a move for one walker by a simple affine invariant transformation 
+        (the stretch move) constructed using the current position of other walker 
+        from the ensemble.
+        -----------------------------------------------------------------------
 
         This function returns:
 
         * wNew: The new proposed position.
 
-        * logpNew: The vector of log-probabilities at the positions
-          given by 'wNew'.
 
-        * zz: random scale factor
+        * zz: random scale factor (dictates the step size)
 
         """
 
@@ -110,7 +124,8 @@ class MCMC:
         wNew[:] = w #(nParams, nwalker)
 
 
-        #draws a random number from the probability density g(z) = sqrt(z)
+        #draws a random number from the probability density, g(z),
+        #of the scale variable: g(z) = sqrt(z)
         zz = ((self.a - 1.) * np.random.rand() + 1) ** 2. / self.a
 
 
@@ -133,7 +148,13 @@ class MCMC:
 
     def sampler(self, w0, wrange, iterations):
         """
-        w0        : 2d array with the initial values; (nParams, nwalker)
+        Run the affine invariant MCMC. 
+        
+        Move one walker at time. One step of the chain goes through all 
+        nwalkers once.    
+        -----------------------------------------------------------------------
+            
+        w0        : 2d array with the initial values of all; (nParams, nwalker)
         wrange    : ranges in parameter values
         iterations: number of steps to perform
 
@@ -145,7 +166,7 @@ class MCMC:
 
         """
 
-        w = w0.copy()
+        w = w0.copy() #size: (nParams, nwalker)
 
         assert self.nP == len(w)
 
@@ -177,11 +198,13 @@ class MCMC:
                 if logpNew != -np.Inf:
                     loglNew = self.logLikelihood(wNew[:,k])
 
-                # only when prior and likelyhood function is valid than calculate the total probability    
+                # only when prior and likelyhood function is valid than 
+                #calculate the total probability    
                 if logpNew == -np.Inf or np.isnan(loglNew):
                     logRatio = -np.Inf
                 else:
-                    # Log of acceptance ratio for the stretch move: Z^(nParams -1) p(wNew)/p(w)
+                    # Log of acceptance ratio for the stretch move:
+                    #Z^(nParams -1) p(wNew)/p(w)
                     logRatio = (self.nP - 1.) * np.log(zz) + (logpNew + loglNew ) - (logp[k] + logl[k])
                 logRatio = min(0.0, logRatio)
 
