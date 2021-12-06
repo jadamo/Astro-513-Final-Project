@@ -74,11 +74,12 @@ class MCMC:
             np.random.seed(seed)
       
     def multivariate_normal(self, mean, cov, *size):
-        # choose the new positions of all parameters together for a multivariate normal distribution 
-        n = cov.shape[0]
-        eps = 1e-10
-        norm = np.random.randn(*size,n).reshape(-1,n)
-        return ((np.linalg.cholesky(cov + eps*np.eye(n))@norm.T).T + mean).reshape(*size, n)
+#         # choose the new positions of all parameters together for a multivariate normal distribution 
+#         n = cov.shape[0]
+#         eps = 1e-10
+#         norm = np.random.randn(*size,n).reshape(-1,n)
+#         return ((np.linalg.cholesky(cov + eps*np.eye(n))@norm.T).T + mean).reshape(*size, n)
+        return np.random.multivariate_normal(mean, cov, *size)
     
     def logLikelihood(self, w):
 
